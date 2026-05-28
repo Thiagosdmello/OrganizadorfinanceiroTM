@@ -270,6 +270,42 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);max
 .di-nome-custom{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;flex:1;-webkit-appearance:none;}
 .di-nome-custom::placeholder{color:var(--muted);}
 .desp-save-row{padding:0 14px 14px;}
+
+/* ════ INVESTIMENTOS ════ */
+.inv-filters{display:flex;gap:7px;flex-wrap:wrap;}
+.inv-filter-btn{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:9px;color:var(--muted);font-family:'Syne',sans-serif;font-size:11px;font-weight:700;padding:7px 13px;cursor:pointer;transition:all .2s;}
+.inv-filter-btn.active{background:rgba(79,142,247,.18);border-color:rgba(79,142,247,.5);color:var(--accent);}
+.inv-filter-btn:active{opacity:.7;}
+
+.inv-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:10px;cursor:grab;transition:box-shadow .2s,opacity .2s;}
+.inv-box:active{cursor:grabbing;}
+.inv-box.dragging{opacity:.4;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+.inv-box.drag-over{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,142,247,.3);}
+.inv-box-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.inv-drag-handle{color:var(--muted);font-size:16px;cursor:grab;flex-shrink:0;user-select:none;}
+.inv-num{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:var(--muted);background:rgba(255,255,255,.06);border-radius:6px;padding:2px 7px;flex-shrink:0;}
+.inv-nome-input{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;flex:1;min-width:0;-webkit-appearance:none;}
+.inv-nome-input::placeholder{color:var(--muted);}
+.inv-nome-input:focus{border-color:rgba(79,142,247,.5);}
+.inv-box-body{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.inv-field{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:7px 10px;}
+.inv-field label{display:block;font-size:10px;color:var(--muted);margin-bottom:3px;}
+.inv-field input[type=number]{background:transparent;border:none;color:var(--text);font-family:'Syne',sans-serif;font-size:14px;font-weight:600;width:100%;outline:none;-webkit-appearance:none;}
+.inv-field input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.inv-field select{background:transparent;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;width:100%;outline:none;-webkit-appearance:none;}
+.inv-field select option{background:#1c2333;}
+
+.inv-total-box{background:#1a2f50;border:1px solid rgba(79,142,247,.35);border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin:14px 0 0;}
+.inv-total-val{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--green);}
+
+.inv-chart-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:14px;}
+#invChart{max-width:260px;max-height:260px;}
+.inv-legend{width:100%;display:flex;flex-direction:column;gap:7px;}
+.inv-leg-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+.inv-leg-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0;}
+.inv-leg-name{flex:1;color:var(--muted);}
+.inv-leg-val{font-family:'Syne',sans-serif;font-weight:700;color:var(--text);}
+.inv-leg-pct{color:var(--muted);font-size:10px;min-width:34px;text-align:right;}
 </style>
 </head>
 <body>
@@ -350,6 +386,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);max
   <div class="tabbar">
     <div class="tab active" id="tab-main"    onclick="gotoTab('main')">📊 Principal</div>
     <div class="tab"        id="tab-desp"    onclick="gotoTab('desp')">💸 Despesas</div>
+    <div class="tab"        id="tab-inv"     onclick="gotoTab('inv')">📈 Investimentos</div>
     <div class="tab"        id="tab-arch"    onclick="gotoTab('arch')">📁 Anteriores</div>
     <div class="tab"        id="tab-prof"    onclick="gotoTab('prof')">👤 Perfil</div>
   </div>
@@ -461,6 +498,73 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);max
     </div>
   </div>
 
+
+  <!-- ── INVESTIMENTOS ── -->
+  <div class="page" id="page-inv">
+    <div class="hdr">
+      <div class="hdr-top">
+        <h1>📈 <span>Investimentos</span></h1>
+        <div class="user-pill" onclick="document.getElementById('userMenu').classList.toggle('on')">
+          <div class="u-av" id="hdrAvI">?</div>
+          <div class="u-nm" id="hdrNmI">—</div>
+        </div>
+      </div>
+      <div class="month-sel">
+        <span>📅</span>
+        <select id="iMSel" onchange="ICM=parseInt(this.value);loadInvMonth()">
+          <option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option>
+          <option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option>
+          <option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option>
+          <option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option>
+        </select>
+        <span style="width:1px;height:13px;background:var(--border);display:inline-block;"></span>
+        <button class="yr-btn" onclick="ICY--;document.getElementById('iYrLbl').textContent=ICY;loadInvMonth()">‹</button>
+        <span class="yr-label" id="iYrLbl">2026</span>
+        <button class="yr-btn" onclick="ICY++;document.getElementById('iYrLbl').textContent=ICY;loadInvMonth()">›</button>
+      </div>
+      <!-- filtros -->
+      <div class="inv-filters">
+        <button class="inv-filter-btn active" id="ifBtn0" onclick="setInvFilter('manual')">✋ Manual</button>
+        <button class="inv-filter-btn" id="ifBtn1" onclick="setInvFilter('valor')">💰 Por Valor</button>
+        <button class="inv-filter-btn" id="ifBtn2" onclick="setInvFilter('tipo')">🏷️ Por Tipo</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="sec" style="margin-top:0">💼 Carteira</div>
+      <div id="invBoxes"></div>
+
+      <!-- total -->
+      <div class="inv-total-box">
+        <div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">💰 Total Investido</div>
+          <div class="inv-total-val" id="invTotal">R$ 0,00</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Ativos preenchidos</div>
+          <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)" id="invCount">0</div>
+        </div>
+      </div>
+
+      <!-- gráfico pizza -->
+      <div class="sec">📊 Distribuição por Tipo</div>
+      <div class="inv-chart-wrap">
+        <canvas id="invChart" width="300" height="300"></canvas>
+        <div class="inv-legend" id="invLegend"></div>
+      </div>
+    </div>
+
+    <div style="padding:0 14px;">
+      <div class="btn-row">
+        <button class="btn pri" onclick="saveInvMes()">💾 Salvar</button>
+        <button class="btn sec" onclick="acumularInv()">➕ Acumular</button>
+      </div>
+      <button class="btn imp" onclick="openImportInv()">📂 Importar Mês Salvo</button>
+      <button class="btn pdf" onclick="gerarPDFInv()">📄 Exportar PDF</button>
+      <div class="status" id="statusI"></div>
+    </div>
+  </div>
+
   <!-- ── ANTERIORES ── -->
   <div class="page" id="page-arch">
     <div class="arch-hdr"><h2>📁 Meses Anteriores</h2><p>Edite, exporte ou reorganize.</p></div>
@@ -490,10 +594,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);max
 // Encontre em: supabase.com → seu projeto
 //              → Project Settings → API
 // ════════════════════════════════════════
-var SUPA_URL = 'https://kkgqpzqrpgmamvlqdvrv.supabase.co';
+var SUPA_URL = 'COLE_SUA_PROJECT_URL_AQUI';
 // Exemplo: 'https://xyzxyzxyz.supabase.co'
 
-var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrZ3FwenFycGdtYW12bHFkdnJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjk2OTQsImV4cCI6MjA5NDY0NTY5NH0.htffS62OtYTPZnKk3WTJyPSheRY6sLpBRuX7EFRItuA';
+var SUPA_KEY = 'COLE_SUA_ANON_KEY_AQUI';
 // Exemplo: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 // ════════════════════════════════════════
 var _sb = null;
@@ -619,8 +723,8 @@ function gotoApp(user){
   var name=user.name||user.email.split('@')[0];
   var ini=name.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
   var fn=name.split(' ')[0];
-  ['hdrAv','hdrAvD','profAv'].forEach(function(id){document.getElementById(id).textContent=ini;});
-  ['hdrNm','hdrNmD','profName'].forEach(function(id){document.getElementById(id).textContent=fn;});
+  ['hdrAv','hdrAvD','hdrAvI','profAv'].forEach(function(id){document.getElementById(id).textContent=ini;});
+  ['hdrNm','hdrNmD','hdrNmI','profName'].forEach(function(id){document.getElementById(id).textContent=fn;});
   document.getElementById('umName').textContent=name;
   document.getElementById('umEmail').textContent=user.email;
   document.getElementById('profEmail').textContent=user.email;
@@ -634,13 +738,15 @@ function gotoApp(user){
   document.getElementById('mSel').value=CM;
   document.getElementById('dMSel').value=DCM;
   document.getElementById('dYrLbl').textContent=DCY;
+  document.getElementById('iMSel').value=ICM;
+  document.getElementById('iYrLbl').textContent=ICY;
   document.getElementById('yrLbl').textContent=CY;
   loadAllMeses();loadMonth();
 }
 
 // ── TABS ──
 function gotoTab(t){
-  ['main','desp','arch','prof'].forEach(function(n){
+  ['main','desp','inv','arch','prof'].forEach(function(n){
     document.getElementById('page-'+n).classList.toggle('active',n===t);
     document.getElementById('tab-'+n).classList.toggle('active',n===t);
   });
@@ -648,6 +754,7 @@ function gotoTab(t){
   if(t==='arch')renderArch();
   if(t==='prof')document.getElementById('profCount').textContent=_allMeses.length;
   if(t==='desp'){loadDespMonth();calcDesp();}
+  if(t==='inv'){ensureInvBuilt();loadInvMonth();}
 }
 function goProf(){document.getElementById('userMenu').classList.remove('on');gotoTab('prof');}
 
@@ -935,13 +1042,21 @@ function closeImport(){document.getElementById('importModal').classList.remove('
 function importMes(m,y){
   CM=m;CY=y;document.getElementById('mSel').value=CM;
   document.getElementById('dMSel').value=DCM;
-  document.getElementById('dYrLbl').textContent=DCY;document.getElementById('yrLbl').textContent=CY;
+  document.getElementById('dYrLbl').textContent=DCY;
+  document.getElementById('iMSel').value=ICM;
+  document.getElementById('iYrLbl').textContent=ICY;document.getElementById('yrLbl').textContent=CY;
   closeImport();gotoTab('main');window.scrollTo({top:0,behavior:'smooth'});
   loadMonth();setStatus('✅ '+MN[CM]+' '+CY+' importado!');
 }
 
 // ── ARCH ──
-// helper: total de despesas a partir do objeto salvo
+// helper: total investido a partir do objeto salvo
+function invTotalFromObj(o){
+  if(!o||!o.investimentos)return 0;
+  return o.investimentos.reduce(function(a,d){return a+(d&&d.valor||0);},0);
+}
+// helper: tem investimentos?
+function hasInv(o){return o&&o.investimentos&&o.investimentos.some(function(d){return d&&d.valor>0;});}
 function despFromObj(o){
   if(!o)return 0;
   var t=0;
@@ -1008,10 +1123,21 @@ function renderArch(){
       +'</div>';
     }
 
+    // seção investimentos
+    var comInv=hasInv(row.dados);
+    var invTotal2=invTotalFromObj(row.dados);
+    if(comInv){
+      h+='<div class="arch-section">'
+        +'<div class="arch-sec-label"><span class="arch-sec-dot" style="background:#4f8ef7"></span>📈 Investimentos</div>'
+        +'<div class="arch-sec-val" style="color:#4f8ef7">'+fmt(invTotal2)+'</div>'
+      +'</div>';
+    }
+
     // ações
     h+='<div class="acard-acts">'
       +'<button class="aact" onclick="editArch('+row.mes+','+row.ano+')"><span class="aact-ic">✏️</span>Editar</button>'
       +'<button class="aact" onclick="editDespArch('+row.mes+','+row.ano+')"><span class="aact-ic">💸</span>Despesas</button>'
+      +'<button class="aact" onclick="editInvArch('+row.mes+','+row.ano+')"><span class="aact-ic">📈</span>Invest.</button>'
       +'<button class="aact" onclick="pdfArch('+row.mes+','+row.ano+')"><span class="aact-ic">📄</span>PDF</button>'
       +'<button class="aact" onclick="openMove('+row.mes+','+row.ano+')"><span class="aact-ic">↕</span>Mover</button>'
       +'<button class="aact" onclick="delArch('+row.mes+','+row.ano+')"><span class="aact-ic">🗑</span>Excluir</button>'
@@ -1029,6 +1155,11 @@ function editDespArch(m,y){
   DCM=m;DCY=y;document.getElementById('dMSel').value=DCM;
   document.getElementById('dYrLbl').textContent=DCY;
   gotoTab('desp');window.scrollTo({top:0,behavior:'smooth'});loadDespMonth();setStatusD('✏️ '+MN[m]+' '+y+' carregado');
+}
+function editInvArch(m,y){
+  ICM=m;ICY=y;document.getElementById('iMSel').value=ICM;
+  document.getElementById('iYrLbl').textContent=ICY;
+  gotoTab('inv');window.scrollTo({top:0,behavior:'smooth'});
 }
 function delArch(m,y){
   var sb=getSB();if(!_currentUser||!sb)return;
@@ -1059,12 +1190,320 @@ function pdfArch(m,y){
   var bkM=CM,bkY=CY;CM=m;CY=y;
   document.getElementById('mSel').value=CM;
   document.getElementById('dMSel').value=DCM;
-  document.getElementById('dYrLbl').textContent=DCY;document.getElementById('yrLbl').textContent=CY;
+  document.getElementById('dYrLbl').textContent=DCY;
+  document.getElementById('iMSel').value=ICM;
+  document.getElementById('iYrLbl').textContent=ICY;document.getElementById('yrLbl').textContent=CY;
   gotoTab('main');window.scrollTo({top:0,behavior:'smooth'});loadMonth();
   setTimeout(function(){gerarPDF(function(){CM=bkM;CY=bkY;document.getElementById('mSel').value=CM;
   document.getElementById('dMSel').value=DCM;
-  document.getElementById('dYrLbl').textContent=DCY;document.getElementById('yrLbl').textContent=CY;loadMonth();});},400);
+  document.getElementById('dYrLbl').textContent=DCY;
+  document.getElementById('iMSel').value=ICM;
+  document.getElementById('iYrLbl').textContent=ICY;document.getElementById('yrLbl').textContent=CY;loadMonth();});},400);
 }
+
+// ════════════════════════════════════════
+// ABA INVESTIMENTOS
+// ════════════════════════════════════════
+var INV_TIPOS=[
+  'CDB','CDI','Tesouro Direto','Ações','FIIs','ETFs','Debêntures',
+  'LCI','LCA','CRI','CRA','Poupança','Fundos de Investimento',
+  'Previdência Privada','Criptomoedas','Câmbio / Moedas Estrangeiras',
+  'Renda Fixa','Renda Variável'
+];
+var INV_N=10;
+var INV_COLORS=[
+  '#4f8ef7','#38d9a9','#ffd43b','#f76f4f','#a78bfa',
+  '#f06595','#74c0fc','#63e6be','#ffa94d','#da77f2',
+  '#4dabf7','#96f2d7','#ffec99','#ffc9c9','#d0bfff',
+  '#a9e34b','#ff8787','#66d9e8'
+];
+
+// ── BUILD boxes ──
+function buildInvBoxes(){
+  var w=document.getElementById('invBoxes');if(!w)return;
+  w.innerHTML='';
+  for(var i=0;i<INV_N;i++) createInvBox(i,null,w);
+  setupInvDrag();
+}
+
+function createInvBox(idx,data,container){
+  var div=document.createElement('div');
+  div.className='inv-box';div.dataset.idx=idx;div.id='invBox_'+idx;
+  var tipoOpts=INV_TIPOS.map(function(t,ti){
+    return '<option value="'+t+'"'+(data&&data.tipo===t?' selected':'')+'>'+t+'</option>';
+  }).join('');
+  div.innerHTML=
+    '<div class="inv-box-head">'
+      +'<span class="inv-drag-handle" title="Arraste para reordenar">⠿</span>'
+      +'<span class="inv-num">#'+(idx+1)+'</span>'
+      +'<input type="text" class="inv-nome-input" placeholder="Nome do investimento…" value="'+(data&&data.nome?escHtmlInv(data.nome):'')+'" oninput="calcInv()">'
+    +'</div>'
+    +'<div class="inv-box-body">'
+      +'<div class="inv-field"><label>💰 Valor Investido R$</label>'
+        +'<input type="number" placeholder="0" inputmode="decimal" value="'+(data&&data.valor||'')+'" oninput="calcInv()">'
+      +'</div>'
+      +'<div class="inv-field"><label>🏷️ Tipo</label>'
+        +'<select onchange="calcInv()">'
+          +'<option value="">Selecionar…</option>'+tipoOpts
+        +'</select>'
+      +'</div>'
+    +'</div>';
+  container.appendChild(div);
+}
+
+function escHtmlInv(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── DRAG & DROP ──
+function setupInvDrag(){
+  var boxes=document.querySelectorAll('.inv-box');
+  boxes.forEach(function(box){
+    box.setAttribute('draggable','true');
+    box.addEventListener('dragstart',function(e){
+      _invDragSrc=box;box.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    box.addEventListener('dragend',function(){
+      box.classList.remove('dragging');
+      document.querySelectorAll('.inv-box').forEach(function(b){b.classList.remove('drag-over');});
+      renumberInvBoxes();calcInv();
+    });
+    box.addEventListener('dragover',function(e){
+      e.preventDefault();e.dataTransfer.dropEffect='move';
+      if(box!==_invDragSrc)box.classList.add('drag-over');
+    });
+    box.addEventListener('dragleave',function(){box.classList.remove('drag-over');});
+    box.addEventListener('drop',function(e){
+      e.preventDefault();box.classList.remove('drag-over');
+      if(_invDragSrc&&_invDragSrc!==box){
+        var w=document.getElementById('invBoxes');
+        var boxes=[].slice.call(w.children);
+        var si=boxes.indexOf(_invDragSrc),di=boxes.indexOf(box);
+        if(si<di)w.insertBefore(_invDragSrc,box.nextSibling);
+        else w.insertBefore(_invDragSrc,box);
+      }
+    });
+    // touch drag
+    var th=box.querySelector('.inv-drag-handle');
+    if(th){th.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:true});}
+  });
+}
+
+function renumberInvBoxes(){
+  document.querySelectorAll('.inv-box').forEach(function(box,i){
+    var num=box.querySelector('.inv-num');if(num)num.textContent='#'+(i+1);
+    box.dataset.idx=i;
+  });
+}
+
+// ── FILTRO ──
+function setInvFilter(f){
+  _invFilter=f;
+  ['manual','valor','tipo'].forEach(function(v,i){
+    document.getElementById('ifBtn'+i).classList.toggle('active',v===f);
+  });
+  applyInvFilter();
+}
+
+function applyInvFilter(){
+  var data=getInvData();
+  if(_invFilter==='manual'){buildInvBoxesFromData(data);return;}
+  var items=data.filter(function(d){return d.nome||d.valor;});
+  var empty=data.filter(function(d){return !d.nome&&!d.valor;});
+  if(_invFilter==='valor'){
+    items.sort(function(a,b){return (b.valor||0)-(a.valor||0);});
+  }else if(_invFilter==='tipo'){
+    // soma por tipo
+    var totByTipo={};
+    items.forEach(function(d){
+      var t=d.tipo||''; totByTipo[t]=(totByTipo[t]||0)+(d.valor||0);
+    });
+    items.sort(function(a,b){
+      var ta=a.tipo||'',tb=b.tipo||'';
+      var diff=(totByTipo[tb]||0)-(totByTipo[ta]||0);
+      if(diff!==0)return diff;
+      return (b.valor||0)-(a.valor||0);
+    });
+  }
+  buildInvBoxesFromData(items.concat(empty));
+}
+
+function buildInvBoxesFromData(data){
+  var w=document.getElementById('invBoxes');if(!w)return;
+  w.innerHTML='';
+  var n=Math.max(INV_N,data.length);
+  for(var i=0;i<n;i++) createInvBox(i,data[i]||null,w);
+  setupInvDrag();calcInv();
+}
+
+// ── CALC ──
+function getInvData(){
+  var boxes=document.querySelectorAll('.inv-box');
+  var data=[];
+  boxes.forEach(function(box){
+    var nome=(box.querySelector('.inv-nome-input')||{}).value||'';
+    var valEl=box.querySelector('input[type=number]');
+    var valor=parseFloat(valEl&&valEl.value)||0;
+    var sel=box.querySelector('select');
+    var tipo=(sel&&sel.value)||'';
+    data.push({nome:nome,valor:valor,tipo:tipo});
+  });
+  return data;
+}
+
+function calcInv(){
+  var data=getInvData();
+  var total=0,count=0;
+  var byTipo={};
+  data.forEach(function(d){
+    if(d.valor){total+=d.valor;count++;}
+    if(d.valor&&d.tipo){byTipo[d.tipo]=(byTipo[d.tipo]||0)+d.valor;}
+  });
+  tx('invTotal',fmt(total));
+  tx('invCount',String(count));
+  drawInvChart(byTipo,total);
+}
+
+// ── GRÁFICO PIZZA ──
+function drawInvChart(byTipo,total){
+  var canvas=document.getElementById('invChart');
+  var legend=document.getElementById('invLegend');
+  if(!canvas||!legend)return;
+  var ctx=canvas.getContext('2d');
+  var W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,r=Math.min(W,H)/2-10;
+  ctx.clearRect(0,0,W,H);
+
+  var tipos=Object.keys(byTipo).filter(function(t){return byTipo[t]>0;});
+  if(!tipos.length){
+    ctx.fillStyle='#2a3347';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#6b7a99';ctx.font='bold 13px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText('Sem dados',cx,cy);
+    legend.innerHTML='';return;
+  }
+
+  // ordena por valor desc
+  tipos.sort(function(a,b){return byTipo[b]-byTipo[a];});
+
+  var start=-Math.PI/2,legHtml='';
+  tipos.forEach(function(tipo,i){
+    var slice=byTipo[tipo]/total*(Math.PI*2);
+    var color=INV_COLORS[i%INV_COLORS.length];
+    // slice
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,start+slice);ctx.closePath();
+    ctx.fillStyle=color;ctx.fill();
+    ctx.strokeStyle='#0e1117';ctx.lineWidth=2;ctx.stroke();
+    // label pct se slice grande o suficiente
+    if(slice>0.25){
+      var mid=start+slice/2;
+      var lx=cx+Math.cos(mid)*r*0.65,ly=cy+Math.sin(mid)*r*0.65;
+      var pct=Math.round(byTipo[tipo]/total*100);
+      ctx.fillStyle='#fff';ctx.font='bold 12px Syne,sans-serif';ctx.textAlign='center';
+      ctx.fillText(pct+'%',lx,ly+4);
+    }
+    start+=slice;
+    var pct2=Math.round(byTipo[tipo]/total*100);
+    legHtml+='<div class="inv-leg-item">'
+      +'<div class="inv-leg-dot" style="background:'+color+'"></div>'
+      +'<div class="inv-leg-name">'+tipo+'</div>'
+      +'<div class="inv-leg-val">'+fmt(byTipo[tipo])+'</div>'
+      +'<div class="inv-leg-pct">'+pct2+'%</div>'
+    +'</div>';
+  });
+  legend.innerHTML=legHtml;
+}
+
+// ── STORAGE ──
+function invKey(uid,m,y){return uid+'_inv_'+y+'_'+m;}
+
+function loadInvMonth(){
+  var sb=getSB();if(!_currentUser||!sb)return;
+  showOverlay('Carregando '+MN[ICM]+'…');
+  sb.from('sal_meses').select('dados').eq('user_id',_currentUser.uid).eq('mes',ICM).eq('ano',ICY).maybeSingle()
+    .then(function(r){
+      hideOverlay();
+      var d=r.data&&r.data.dados&&r.data.dados.investimentos;
+      buildInvBoxesFromData(d&&d.length?d:Array(INV_N).fill(null));
+    }).catch(function(){hideOverlay();buildInvBoxes();});
+}
+
+function saveInvMes(){
+  var sb=getSB();if(!_currentUser||!sb){setStatusI('❌ Faça login primeiro.');return;}
+  showOverlay('Salvando…');
+  sb.from('sal_meses').select('dados').eq('user_id',_currentUser.uid).eq('mes',ICM).eq('ano',ICY).maybeSingle()
+    .then(function(r){
+      var dados=r.data?r.data.dados:{}; if(!dados)dados={};
+      dados.investimentos=getInvData();dados.ts=Date.now();
+      return sb.from('sal_meses').upsert({user_id:_currentUser.uid,mes:ICM,ano:ICY,dados:dados,updated_at:new Date().toISOString()},{onConflict:'user_id,mes,ano'});
+    }).then(function(r){
+      hideOverlay();
+      if(r&&r.error){setStatusI('❌ '+r.error.message);}
+      else{loadAllMeses();renderArch();setStatusI('✅ '+MN[ICM]+' '+ICY+' salvo!');}
+    }).catch(function(){hideOverlay();setStatusI('❌ Erro de conexão.');});
+}
+
+function acumularInv(){
+  var sb=getSB();if(!_currentUser||!sb)return;
+  var pm=ICM-1,py=ICY;if(pm<0){pm=11;py--;}
+  showOverlay('Buscando mês anterior…');
+  sb.from('sal_meses').select('dados').eq('user_id',_currentUser.uid).eq('mes',pm).eq('ano',py).maybeSingle()
+    .then(function(r){
+      hideOverlay();
+      if(!r.data||!r.data.dados||!r.data.dados.investimentos){setStatusI('⚠️ Mês anterior não encontrado.');return;}
+      buildInvBoxesFromData(r.data.dados.investimentos);
+      setStatusI('✅ Acumulado com '+MN[pm]+'/'+py+'!');
+    }).catch(function(){hideOverlay();setStatusI('❌ Erro de conexão.');});
+}
+
+function openImportInv(){
+  loadAllMeses();
+  setTimeout(function(){
+    var html2='';
+    if(!_allMeses.length)html2='<div class="im-empty">Nenhum mês salvo ainda.</div>';
+    else _allMeses.forEach(function(row){
+      html2+='<div class="im-item" onclick="importInvMes('+row.mes+','+row.ano+')">'
+        +'<div class="im-info"><div class="im-name">'+MN[row.mes]+' '+row.ano+'</div>'
+        +'<div class="im-net">Líquido: '+fmt(netFromObj(row.dados))+'</div></div>'
+        +'<div class="im-arrow">→</div></div>';
+    });
+    document.getElementById('imList').innerHTML=html2;
+    document.getElementById('importModal').classList.add('on');
+  },400);
+}
+
+function importInvMes(m,y){
+  ICM=m;ICY=y;
+  document.getElementById('iMSel').value=ICM;
+  document.getElementById('iYrLbl').textContent=ICY;
+  closeImport();loadInvMonth();
+  setStatusI('✅ '+MN[ICM]+' '+ICY+' importado!');
+}
+
+function gerarPDFInv(){
+  var btn=document.querySelector('#page-inv .btn.pdf');if(btn)btn.disabled=true;
+  showOverlay('Preparando PDF…');
+  var src=document.getElementById('page-inv');
+  setTimeout(function(){
+    html2canvas(src,{backgroundColor:'#0e1117',scale:2,useCORS:true,logging:false})
+    .then(function(canvas){
+      var img=canvas.toDataURL('image/png'),pw=210,ph=Math.round(canvas.height/canvas.width*pw);
+      var pdf=new window.jspdf.jsPDF({orientation:'p',unit:'mm',format:[pw,ph]});
+      pdf.addImage(img,'PNG',0,0,pw,ph);
+      var blob=pdf.output('blob'),name='Investimentos_'+MN[ICM]+'_'+ICY+'.pdf';
+      hideOverlay();if(btn)btn.disabled=false;
+      var url=URL.createObjectURL(blob);
+      if(navigator.share&&navigator.canShare){
+        var f=new File([blob],name,{type:'application/pdf'});
+        if(navigator.canShare({files:[f]})){navigator.share({files:[f],title:name}).then(function(){URL.revokeObjectURL(url);}).catch(function(e){if(e.name!=='AbortError')dlFile(url,name);});return;}
+      }
+      dlFile(url,name);
+    }).catch(function(){hideOverlay();if(btn)btn.disabled=false;setStatusI('❌ Erro ao gerar PDF.');});
+  },200);
+}
+
+function setStatusI(msg){var e=document.getElementById('statusI');if(e){e.textContent=msg;setTimeout(function(){e.textContent='';},3500);}}
+
+// ── INIT boxes no gotoApp ──
+var _invBuilt=false;
+function ensureInvBuilt(){if(!_invBuilt){buildInvBoxes();_invBuilt=true;}}
 
 // ── STATUS / OVERLAY ──
 function setStatus(msg){var e=document.getElementById('status');e.textContent=msg;setTimeout(function(){e.textContent='';},3500);}
@@ -1139,6 +1578,8 @@ function importDespMes(m,y){
   DCM=m;DCY=y;
   document.getElementById('dMSel').value=DCM;
   document.getElementById('dYrLbl').textContent=DCY;
+  document.getElementById('iMSel').value=ICM;
+  document.getElementById('iYrLbl').textContent=ICY;
   closeImport();loadDespMonth();
   setStatusD('✅ '+MN[DCM]+' '+DCY+' importado!');
 }
